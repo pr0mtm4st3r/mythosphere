@@ -349,7 +349,7 @@ export default function App() {
             <div className="w-7 h-7 rounded-md bg-[#D97757] flex items-center justify-center">
               <Gamepad2 className="w-4 h-4 text-[#15140F]" strokeWidth={2.5} />
             </div>
-            <span className="font-serif text-lg tracking-tight">Mythosphere</span>
+            <span className="font-serif text-lg tracking-tight">Promtforge</span>
           </div>
           <button
             onClick={() => setShowSubmit(true)}
