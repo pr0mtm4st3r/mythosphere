@@ -1,6 +1,16 @@
 import { useState, useEffect } from "react";
-import { Link2, Play, ExternalLink, Gamepad2, Sparkles, Search, X } from "lucide-react";
+import { Link2, Play, ExternalLink, Gamepad2, Sparkles, Search, X, ArrowUp } from "lucide-react";
 import { supabase } from "./supabaseClient";
+
+const CATEGORIES = ["Arcade", "Puzzle", "Exploration", "Platformer", "Strategy", "Idle", "Other"];
+
+function hasVoted(gameId) {
+  return localStorage.getItem(`voted_${gameId}`) === "1";
+}
+
+function markVoted(gameId) {
+  localStorage.setItem(`voted_${gameId}`, "1");
+}
 
 function formatPlays(n) {
   if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
@@ -23,46 +33,67 @@ function colorFor(title = "") {
   return COLORS[Math.abs(hash)];
 }
 
-function GameCard({ game, onOpen }) {
+function GameCard({ game, onOpen, onUpvote }) {
   const color = colorFor(game.title);
+  const voted = hasVoted(game.id);
+
   return (
-    <button
-      onClick={() => onOpen(game)}
-      className="group text-left bg-[#1C1B1A] border border-[#2E2C2A] rounded-lg overflow-hidden hover:border-[#D97757] transition-colors duration-200 flex flex-col"
-    >
-      <div
-        className="h-32 w-full relative flex items-center justify-center overflow-hidden"
-        style={{ background: `linear-gradient(135deg, ${color}33, #15140F)` }}
-      >
+    <div className="group bg-[#1C1B1A] border border-[#2E2C2A] rounded-lg overflow-hidden hover:border-[#D97757] transition-colors duration-200 flex flex-col">
+      <button onClick={() => onOpen(game)} className="text-left flex flex-col flex-1">
         <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage: `radial-gradient(circle at 20% 30%, ${color}55 0%, transparent 40%), radial-gradient(circle at 80% 70%, ${color}33 0%, transparent 45%)`
-          }}
-        />
-        <Gamepad2 className="relative z-10 w-8 h-8 transition-transform duration-300 group-hover:scale-110" style={{ color }} strokeWidth={1.5} />
-        <span className="absolute top-2 right-2 text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded-full bg-[#15140F]/80 text-[#A8A29B] border border-[#2E2C2A]">
-          {game.embeddable ? "Play here" : "Opens externally"}
-        </span>
-      </div>
-      <div className="p-4 flex flex-col gap-1.5 flex-1">
-        <h3 className="font-serif text-lg text-[#F4F1EA] leading-tight">{game.title}</h3>
-        <p className="text-sm text-[#A8A29B] leading-snug">{game.tagline}</p>
-        <div className="mt-auto pt-3 flex items-center justify-between text-xs text-[#6E6A64]">
-          <span>by {game.creator}</span>
+          className="h-32 w-full relative flex items-center justify-center overflow-hidden"
+          style={{ background: `linear-gradient(135deg, ${color}33, #15140F)` }}
+        >
+          <div
+            className="absolute inset-0 opacity-30"
+            style={{
+              backgroundImage: `radial-gradient(circle at 20% 30%, ${color}55 0%, transparent 40%), radial-gradient(circle at 80% 70%, ${color}33 0%, transparent 45%)`
+            }}
+          />
+          <Gamepad2 className="relative z-10 w-8 h-8 transition-transform duration-300 group-hover:scale-110" style={{ color }} strokeWidth={1.5} />
+          <span className="absolute top-2 right-2 text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded-full bg-[#15140F]/80 text-[#A8A29B] border border-[#2E2C2A]">
+            {game.embeddable ? "Play here" : "Opens externally"}
+          </span>
+          {game.category && (
+            <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded-full bg-[#15140F]/80 border border-[#2E2C2A]" style={{ color }}>
+              {game.category}
+            </span>
+          )}
+        </div>
+        <div className="p-4 flex flex-col gap-1.5 flex-1">
+          <h3 className="font-serif text-lg text-[#F4F1EA] leading-tight">{game.title}</h3>
+          <p className="text-sm text-[#A8A29B] leading-snug">{game.tagline}</p>
+        </div>
+      </button>
+      <div className="px-4 pb-4 flex items-center justify-between text-xs text-[#6E6A64]">
+        <span>by {game.creator}</span>
+        <div className="flex items-center gap-3">
           <span className="flex items-center gap-1">
             <Sparkles className="w-3 h-3" />
             {formatPlays(game.plays)} plays
           </span>
+          <button
+            onClick={(e) => { e.stopPropagation(); onUpvote(game); }}
+            disabled={voted}
+            className={`flex items-center gap-1 px-2 py-1 rounded-md border transition-colors ${
+              voted
+                ? "border-[#D97757] text-[#D97757]"
+                : "border-[#2E2C2A] text-[#A8A29B] hover:text-[#F4F1EA] hover:border-[#D97757]"
+            }`}
+          >
+            <ArrowUp className="w-3 h-3" />
+            {game.upvotes || 0}
+          </button>
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
-function GameDetail({ game, onClose }) {
+function GameDetail({ game, onClose, onUpvote }) {
   const [playing, setPlaying] = useState(false);
   const color = colorFor(game.title);
+  const voted = hasVoted(game.id);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
@@ -116,12 +147,26 @@ function GameDetail({ game, onClose }) {
           <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-[#6E6A64]">
             <span>Creator: <span className="text-[#A8A29B]">{game.creator}</span></span>
             <span>Model: <span className="text-[#A8A29B]">{game.model}</span></span>
+            {game.category && <span>Category: <span className="text-[#A8A29B]">{game.category}</span></span>}
             <span>{formatPlays(game.plays)} plays</span>
             <span className="flex items-center gap-1">
               <Link2 className="w-3 h-3" />
               {getHost(game.url)}
             </span>
           </div>
+
+          <button
+            onClick={() => onUpvote(game)}
+            disabled={voted}
+            className={`flex items-center justify-center gap-2 rounded-md py-2 text-sm font-medium border transition-colors ${
+              voted
+                ? "border-[#D97757] text-[#D97757]"
+                : "border-[#2E2C2A] text-[#A8A29B] hover:text-[#F4F1EA] hover:border-[#D97757]"
+            }`}
+          >
+            <ArrowUp className="w-4 h-4" />
+            {voted ? "Upvoted" : "Upvote"} ({game.upvotes || 0})
+          </button>
 
           {game.embeddable ? (
             <button
@@ -158,7 +203,8 @@ function SubmitModal({ onClose, onSubmitted }) {
     url: "",
     prompt: "",
     creator: "",
-    model: "Mythos"
+    model: "Mythos",
+    category: "Other"
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -196,6 +242,7 @@ function SubmitModal({ onClose, onSubmitted }) {
         prompt: form.prompt,
         creator: form.creator || "anonymous",
         model: form.model,
+        category: form.category,
         embeddable,
         plays: 0
       }
@@ -236,7 +283,7 @@ function SubmitModal({ onClose, onSubmitted }) {
             <input
               value={form.url}
               onChange={update("url")}
-              placeholder="https://yourname.GitHub.io/your-game"
+              placeholder="https://yourname.github.io/your-game"
               className="w-full bg-[#15140F] border border-[#2E2C2A] rounded-md pl-9 pr-3 py-2 text-sm text-[#F4F1EA] placeholder:text-[#6E6A64] focus:outline-none focus:border-[#D97757]"
             />
           </div>
@@ -287,6 +334,16 @@ function SubmitModal({ onClose, onSubmitted }) {
           <option>Other</option>
         </select>
 
+        <select
+          value={form.category}
+          onChange={update("category")}
+          className="bg-[#15140F] border border-[#2E2C2A] rounded-md px-3 py-2 text-sm text-[#A8A29B] focus:outline-none focus:border-[#D97757]"
+        >
+          {CATEGORIES.map((c) => (
+            <option key={c}>{c}</option>
+          ))}
+        </select>
+
         {error && <p className="text-sm text-[#C75D5D]">{error}</p>}
 
         <button
@@ -307,7 +364,24 @@ export default function App() {
   const [selectedGame, setSelectedGame] = useState(null);
   const [showSubmit, setShowSubmit] = useState(false);
   const [filter, setFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [query, setQuery] = useState("");
+
+  const handleUpvote = async (game) => {
+    if (hasVoted(game.id)) return;
+    markVoted(game.id);
+
+    // Optimistic update
+    setGames((prev) => prev.map((g) => (g.id === game.id ? { ...g, upvotes: (g.upvotes || 0) + 1 } : g)));
+    if (selectedGame && selectedGame.id === game.id) {
+      setSelectedGame((g) => ({ ...g, upvotes: (g.upvotes || 0) + 1 }));
+    }
+
+    await supabase
+      .from("games")
+      .update({ upvotes: (game.upvotes || 0) + 1 })
+      .eq("id", game.id);
+  };
 
   const fetchGames = async () => {
     setLoading(true);
@@ -326,6 +400,7 @@ export default function App() {
 
   const filtered = games.filter((g) => {
     if (filter !== "all" && g.model !== filter) return false;
+    if (categoryFilter !== "all" && g.category !== categoryFilter) return false;
     if (query) {
       const q = query.toLowerCase();
       const inTitle = g.title?.toLowerCase().includes(q);
@@ -349,7 +424,7 @@ export default function App() {
             <div className="w-7 h-7 rounded-md bg-[#D97757] flex items-center justify-center">
               <Gamepad2 className="w-4 h-4 text-[#15140F]" strokeWidth={2.5} />
             </div>
-            <span className="font-serif text-lg tracking-tight">Promtforge</span>
+            <span className="font-serif text-lg tracking-tight">Mythosphere</span>
           </div>
           <button
             onClick={() => setShowSubmit(true)}
@@ -400,6 +475,22 @@ export default function App() {
         </div>
       </section>
 
+      <section className="max-w-5xl mx-auto px-4 pb-4 flex gap-2 flex-wrap">
+        {["all", ...CATEGORIES].map((c) => (
+          <button
+            key={c}
+            onClick={() => setCategoryFilter(c)}
+            className={`text-xs px-2.5 py-1 rounded-md border transition-colors ${
+              categoryFilter === c
+                ? "border-[#D97757] text-[#D97757]"
+                : "border-[#2E2C2A] text-[#6E6A64] hover:text-[#F4F1EA]"
+            }`}
+          >
+            {c === "all" ? "All categories" : c}
+          </button>
+        ))}
+      </section>
+
       {/* Grid */}
       <main className="max-w-5xl mx-auto px-4 pb-16">
         {loading ? (
@@ -411,7 +502,7 @@ export default function App() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {filtered.map((g) => (
-              <GameCard key={g.id} game={g} onOpen={setSelectedGame} />
+              <GameCard key={g.id} game={g} onOpen={setSelectedGame} onUpvote={handleUpvote} />
             ))}
           </div>
         )}
@@ -425,7 +516,7 @@ export default function App() {
         </div>
       </footer>
 
-      {selectedGame && <GameDetail game={selectedGame} onClose={() => setSelectedGame(null)} />}
+      {selectedGame && <GameDetail game={selectedGame} onClose={() => setSelectedGame(null)} onUpvote={handleUpvote} />}
       {showSubmit && <SubmitModal onClose={() => setShowSubmit(false)} onSubmitted={fetchGames} />}
     </div>
   );
