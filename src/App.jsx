@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link2, Play, ExternalLink, Gamepad2, Sparkles, Search, X, Github } from "lucide-react";
+import { Link2, Play, ExternalLink, Gamepad2, Sparkles, Search, X, GitHub } from "lucide-react";
 import { supabase } from "./supabaseClient";
 
 function formatPlays(n) {
@@ -236,7 +236,7 @@ function SubmitModal({ onClose, onSubmitted }) {
             <input
               value={form.url}
               onChange={update("url")}
-              placeholder="https://yourname.github.io/your-game"
+              placeholder="https://yourname.GitHub.io/your-game"
               className="w-full bg-[#15140F] border border-[#2E2C2A] rounded-md pl-9 pr-3 py-2 text-sm text-[#F4F1EA] placeholder:text-[#6E6A64] focus:outline-none focus:border-[#D97757]"
             />
           </div>
@@ -420,7 +420,7 @@ export default function App() {
       {/* Footer note */}
       <footer className="max-w-5xl mx-auto px-4 pb-10">
         <div className="border-t border-[#2E2C2A] pt-5 flex items-center gap-2 text-xs text-[#6E6A64]">
-          <Github className="w-3.5 h-3.5" />
+          <GitHub className="w-3.5 h-3.5" />
           <span>Games are hosted by their creators. We just link to them.</span>
         </div>
       </footer>
