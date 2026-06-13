@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link2, Play, ExternalLink, Gamepad2, Sparkles, Search, X, Github } from "lucide-react";
+import { Link2, Play, ExternalLink, Gamepad2, Sparkles, Search, X } from "lucide-react";
 import { supabase } from "./supabaseClient";
 
 function formatPlays(n) {
@@ -173,20 +173,6 @@ function SubmitModal({ onClose, onSubmitted }) {
     setSaving(true);
     setError(null);
 
-    let embeddable = false;
-    try {
-      const checkRes = await fetch("/api/check-embed", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: form.url })
-      });
-      const checkData = await checkRes.json();
-      embeddable = !!checkData.embeddable;
-    } catch {
-      // If the check itself fails, default to not embeddable
-      embeddable = false;
-    }
-
     const { error: insertError } = await supabase.from("games").insert([
       {
         title: form.title,
@@ -196,7 +182,7 @@ function SubmitModal({ onClose, onSubmitted }) {
         prompt: form.prompt,
         creator: form.creator || "anonymous",
         model: form.model,
-        embeddable,
+        embeddable: false, // default; can be updated later after a headers check
         plays: 0
       }
     ]);
@@ -294,7 +280,7 @@ function SubmitModal({ onClose, onSubmitted }) {
           disabled={saving}
           className="w-full rounded-md py-2.5 text-sm font-medium bg-[#D97757] text-[#15140F] disabled:opacity-60"
         >
-          {saving ? "Checking & submitting..." : "Submit"}
+          {saving ? "Submitting..." : "Submit"}
         </button>
       </div>
     </div>
@@ -310,15 +296,17 @@ export default function App() {
   const [query, setQuery] = useState("");
 
   const fetchGames = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("games")
-      .select("*")
-      .order("created_at", { ascending: false });
+  setLoading(true);
+  const { data, error } = await supabase
+    .from("games")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-    if (!error && data) setGames(data);
-    setLoading(false);
-  };
+  console.log("data:", data, "error:", error);
+
+  if (!error && data) setGames(data);
+  setLoading(false);
+};
 
   useEffect(() => {
     fetchGames();
@@ -420,7 +408,7 @@ export default function App() {
       {/* Footer note */}
       <footer className="max-w-5xl mx-auto px-4 pb-10">
         <div className="border-t border-[#2E2C2A] pt-5 flex items-center gap-2 text-xs text-[#6E6A64]">
-          <Github className="w-3.5 h-3.5" />
+          <Link2 className="w-3.5 h-3.5" />
           <span>Games are hosted by their creators. We just link to them.</span>
         </div>
       </footer>
