@@ -155,6 +155,54 @@ function AboutModal({ onClose }) {
   );
 }
 
+function GameCard({ game, onOpen, onUpvote }) {
+  const color = colorFor(game.title);
+  return (
+    <div
+      className="group bg-[#1C1B1A] border border-[#2E2C2A] rounded-lg overflow-hidden hover:border-[#D97757] hover:scale-[1.02] hover:shadow-[0_0_24px_var(--glow)] transition-all duration-300 flex flex-col"
+      style={{ "--glow": `${color}40` }}
+    >
+      <button onClick={() => onOpen(game)} className="text-left flex flex-col flex-1">
+        <div
+          className="h-36 w-full relative flex items-center justify-center overflow-hidden"
+          style={game.thumbnail_url
+            ? { backgroundImage: `url(${game.thumbnail_url})`, backgroundSize: "cover", backgroundPosition: "center" }
+            : { background: `linear-gradient(135deg, ${color}33, #15140F)` }
+          }
+        >
+          {!game.thumbnail_url && (
+            <>
+              <div className="absolute inset-0 opacity-30" style={{ backgroundImage: `radial-gradient(circle at 20% 30%, ${color}55 0%, transparent 40%), radial-gradient(circle at 80% 70%, ${color}33 0%, transparent 45%)` }} />
+              <Gamepad2 className="relative z-10 w-8 h-8 transition-transform duration-300 group-hover:scale-110" style={{ color }} strokeWidth={1.5} />
+            </>
+          )}
+          {game.thumbnail_url && <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />}
+          <span className="absolute top-2 right-2 text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded-full bg-[#15140F]/80 text-[#A8A29B] border border-[#2E2C2A]">
+            {game.embeddable ? "Play here" : "Opens externally"}
+          </span>
+          {game.category && (
+            <span className="absolute top-2 left-2 flex items-center gap-1 text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded-full bg-[#15140F]/80 border border-[#2E2C2A]" style={{ color }}>
+              <span>{CATEGORY_ICONS[game.category] || "✨"}</span>
+              {game.category}
+            </span>
+          )}
+        </div>
+        <div className="p-4 flex flex-col gap-1.5 flex-1">
+          <h3 className="font-serif text-lg text-[#F4F1EA] leading-tight">{game.title}</h3>
+          <p className="text-sm text-[#A8A29B] leading-snug">{game.tagline}</p>
+        </div>
+      </button>
+      <div className="px-4 pb-4 flex items-center justify-between text-xs text-[#6E6A64]">
+        <span>by {game.creator}</span>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1"><Sparkles className="w-3 h-3" />{formatPlays(game.plays)} plays</span>
+          <UpvoteButton game={game} onUpvote={onUpvote} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function RecommendedSection({ games, onOpen, onUpvote }) {
   if (!games || games.length === 0) return null;
   return (
@@ -224,98 +272,6 @@ function FeaturedCard({ game, onOpen, onUpvote }) {
         </div>
       </div>
     </button>
-  );
-}
-
-function RecommendedCard({ game, onOpen, onUpvote }) {
-  const color = colorFor(game.title);
-
-  return (
-    <div
-      className="group rounded-xl p-[1.5px] transition-all duration-300 hover:scale-[1.015]"
-      style={{ background: `linear-gradient(135deg, ${color}, #D97757)` }}
-    >
-      <button onClick={() => onOpen(game)} className="w-full h-full text-left bg-[#1C1B1A] rounded-[11px] overflow-hidden flex flex-col">
-        <div
-          className="h-32 w-full relative flex items-center justify-center overflow-hidden"
-          style={game.thumbnail_url
-            ? { backgroundImage: `url(${game.thumbnail_url})`, backgroundSize: "cover", backgroundPosition: "center" }
-            : { background: `linear-gradient(135deg, ${color}33, #15140F)` }
-          }
-        >
-          {!game.thumbnail_url && (
-            <>
-              <div className="absolute inset-0 opacity-30" style={{ backgroundImage: `radial-gradient(circle at 20% 30%, ${color}55 0%, transparent 40%), radial-gradient(circle at 80% 70%, ${color}33 0%, transparent 45%)` }} />
-              <Gamepad2 className="relative z-10 w-8 h-8 transition-transform duration-300 group-hover:scale-110" style={{ color }} strokeWidth={1.5} />
-            </>
-          )}
-          {game.thumbnail_url && <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />}
-          <span className="absolute top-2 left-2 flex items-center gap-1 text-[10px] uppercase tracking-wider font-semibold px-2 py-1 rounded-full bg-[#15140F]/85 text-[#D97757] border border-[#D97757]/40">
-            <Star className="w-3 h-3" fill="currentColor" />
-            Recommended
-          </span>
-        </div>
-        <div className="p-4 flex flex-col gap-1.5 flex-1">
-          <div className="flex items-center gap-2">
-            {game.category && <span className="text-sm">{CATEGORY_ICONS[game.category] || "✨"}</span>}
-            <h3 className="font-serif text-lg text-[#F4F1EA] leading-tight">{game.title}</h3>
-          </div>
-          <p className="text-sm text-[#A8A29B] leading-snug">{game.tagline}</p>
-          <div className="mt-auto pt-3 flex items-center justify-between text-xs text-[#6E6A64]">
-            <span>by {game.creator}</span>
-            <UpvoteButton game={game} onUpvote={onUpvote} />
-          </div>
-        </div>
-      </button>
-    </div>
-  );
-}
-
-
-  const color = colorFor(game.title);
-  return (
-    <div
-      className="group bg-[#1C1B1A] border border-[#2E2C2A] rounded-lg overflow-hidden hover:border-[#D97757] hover:scale-[1.02] hover:shadow-[0_0_24px_var(--glow)] transition-all duration-300 flex flex-col"
-      style={{ "--glow": `${color}40` }}
-    >
-      <button onClick={() => onOpen(game)} className="text-left flex flex-col flex-1">
-        <div
-          className="h-36 w-full relative flex items-center justify-center overflow-hidden"
-          style={game.thumbnail_url
-            ? { backgroundImage: `url(${game.thumbnail_url})`, backgroundSize: "cover", backgroundPosition: "center" }
-            : { background: `linear-gradient(135deg, ${color}33, #15140F)` }
-          }
-        >
-          {!game.thumbnail_url && (
-            <>
-              <div className="absolute inset-0 opacity-30" style={{ backgroundImage: `radial-gradient(circle at 20% 30%, ${color}55 0%, transparent 40%), radial-gradient(circle at 80% 70%, ${color}33 0%, transparent 45%)` }} />
-              <Gamepad2 className="relative z-10 w-8 h-8 transition-transform duration-300 group-hover:scale-110" style={{ color }} strokeWidth={1.5} />
-            </>
-          )}
-          {game.thumbnail_url && <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />}
-          <span className="absolute top-2 right-2 text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded-full bg-[#15140F]/80 text-[#A8A29B] border border-[#2E2C2A]">
-            {game.embeddable ? "Play here" : "Opens externally"}
-          </span>
-          {game.category && (
-            <span className="absolute top-2 left-2 flex items-center gap-1 text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded-full bg-[#15140F]/80 border border-[#2E2C2A]" style={{ color }}>
-              <span>{CATEGORY_ICONS[game.category] || "✨"}</span>
-              {game.category}
-            </span>
-          )}
-        </div>
-        <div className="p-4 flex flex-col gap-1.5 flex-1">
-          <h3 className="font-serif text-lg text-[#F4F1EA] leading-tight">{game.title}</h3>
-          <p className="text-sm text-[#A8A29B] leading-snug">{game.tagline}</p>
-        </div>
-      </button>
-      <div className="px-4 pb-4 flex items-center justify-between text-xs text-[#6E6A64]">
-        <span>by {game.creator}</span>
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1"><Sparkles className="w-3 h-3" />{formatPlays(game.plays)} plays</span>
-          <UpvoteButton game={game} onUpvote={onUpvote} />
-        </div>
-      </div>
-    </div>
   );
 }
 
